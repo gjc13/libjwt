@@ -18,7 +18,7 @@ if (MSVC)
 endif ()
 
 if (UNIX)
-	option (BUILD_TESTS "Build test projects." OFF)
+    option (BUILD_TESTS "Build test projects." ON)
 endif ()
 
 include_directories (include)
