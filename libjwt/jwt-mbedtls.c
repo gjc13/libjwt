@@ -1,3 +1,4 @@
+#include <alloca.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -6,6 +7,7 @@
 #include <mbedtls/base64.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
+#include <mbedtls/entropy_poll.h>
 #include <mbedtls/md.h>
 #include <mbedtls/pk.h>
 #include <mbedtls/sha256.h>
@@ -15,6 +17,7 @@
 
 #include "config.h"
 #include "jwt-private.h"
+#include "common/entropy_utils.h"
 
 #define SHA256_OUT_SIZE (32)
 #define SHA384_OUT_SIZE (48)
@@ -139,7 +142,7 @@ static int encode_rs_to_der(unsigned char *      sig,
 
     // remove leading zeros except for the leading 0 for "negative" first byte
     int r_data_offset = 0, s_data_offset = 0;
-    while ((*r)== 0)
+    while ((*r) == 0)
     {
         r++;
         r_size--;
@@ -188,6 +191,8 @@ int jwt_sign_sha_pem(jwt_t *jwt, char **out, unsigned int *len, const char *str)
     size_t                   pers_len = 3;
 
     mbedtls_entropy_init(&entropy);
+    mbedtls_entropy_add_source(&entropy, HandleMbedtlsEntropyPoll, NULL, MBEDTLS_ENTROPY_MIN_PLATFORM,
+                               MBEDTLS_ENTROPY_SOURCE_STRONG);
     mbedtls_ctr_drbg_init(&ctr_drbg);
     mbedtls_pk_init(&pk);
 
@@ -228,6 +233,7 @@ int jwt_sign_sha_pem(jwt_t *jwt, char **out, unsigned int *len, const char *str)
 
     if (mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, pers, pers_len) != 0)
     {
+        ret = EINVAL;
         goto exit;
     }
 

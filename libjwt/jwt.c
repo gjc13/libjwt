@@ -9,6 +9,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include <alloca.h>
+
 #include <jwt.h>
 
 #include "jwt-private.h"
